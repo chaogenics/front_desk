@@ -12,8 +12,8 @@ def on_closing():
 	add_user.destroy()
 	login.destroy()
 	
-#maybe use in future
-#first_run_flag = True
+#used to check for first run
+first_run_flag = False
 
 #config file name
 config_file = 'config.ini'
@@ -97,12 +97,18 @@ if not os.path.exists(db_file_path):
 		create_config()
 
 def clear_user():
+	global first_run_flag
 	entry_username.delete(0,END)
 	entry_password.delete(0,END)
 	entry_first_name.delete(0,END)
 	entry_last_name.delete(0,END)
 	checkbox_var.set(0)
-	entry_first_name.focus_set()
+
+	if first_run_flag:
+		first_run_flag = False
+		return_to_login()
+	else:
+		entry_first_name.focus_set()
 
 def create_user():
 	conn,cur = return_conn(db_file_path)
@@ -152,6 +158,20 @@ def validate_login():
         open_add_user()
     else:
         messagebox.showerror("Login Failed", "Invalid username or password")
+
+#first_run_check() checks to see if user data in table
+#if not, forced to add a user
+def first_run_check():
+	global first_run_flag
+	conn,cur = return_conn(db_file_path)
+	data = cur.execute('SELECT * FROM users')
+	if len(list(data)) > 0:
+		return
+	else:
+		messagebox.showerror("First Run", "Please add user to continue")
+		first_run_flag = True
+		open_add_user()
+
 
 def open_add_user():
     login.withdraw()
@@ -274,4 +294,5 @@ admin_check_button.grid(row=4,column=1,sticky="W")
 create_button = Button(au_frame_middle_two,text="Create User",command=create_user)
 create_button.pack()
 
+first_run_check() #check to see if users in table
 login.mainloop()
